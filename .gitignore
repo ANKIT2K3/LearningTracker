@@ -1,6 +1,32 @@
+# Maven / Java build output
 target/
+*.class
+*.log
+.mvn/wrapper/maven-wrapper.jar
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local environment files (keep committed examples)
+.env
+.env.*
+!.env.example
+
+# IDE metadata
 .idea/
 .vscode/
-*.log
-.env
-*.class
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache/
+
+# Local workspace folder
+/Microsoft/
