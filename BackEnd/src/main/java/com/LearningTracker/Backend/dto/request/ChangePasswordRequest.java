@@ -2,6 +2,9 @@ package com.LearningTracker.Backend.dto.request;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * Frontend sends: { currentPassword, newPassword }
+ */
 public class ChangePasswordRequest {
 
     @NotBlank

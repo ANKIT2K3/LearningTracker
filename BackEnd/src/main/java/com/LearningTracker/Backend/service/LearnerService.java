@@ -3,7 +3,7 @@ package com.LearningTracker.Backend.service;
 import com.LearningTracker.Backend.dto.request.CreateLearnerRequest;
 import com.LearningTracker.Backend.dto.response.CreateLearnerResponse;
 import com.LearningTracker.Backend.dto.response.LearnerResponse;
-import com.LearningTracker.Backend.dto.response.MessageResponse;
+import com.LearningTracker.Backend.dto.response.ResetPasswordResponse;
 import com.LearningTracker.Backend.entity.Account;
 import com.LearningTracker.Backend.entity.Learner;
 import com.LearningTracker.Backend.repository.AccountRepository;
@@ -15,12 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class LearnerService {
+
+    // 24-hour temp password window, in epoch-millis (for the frontend expiresAt field)
+    private static final long TEMP_PASSWORD_MS = 86_400_000L;
 
     private final AccountRepository accountRepository;
     private final LearnerRepository learnerRepository;
@@ -40,13 +44,14 @@ public class LearnerService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
         String tempPassword = generateTempPassword();
+        long expiresAt = System.currentTimeMillis() + TEMP_PASSWORD_MS;
 
         Account account = new Account();
         account.setEmail(req.getEmail().toLowerCase());
         account.setPasswordHash(passwordEncoder.encode(tempPassword));
         account.setRole("LEARNER");
         account.setMustChangePassword(true);
-        account.setTempPasswordExpiresAt(LocalDateTime.now().plusHours(24));
+        account.setTempPasswordExpiresAt(toLocalDateTime(expiresAt));
         account = accountRepository.save(account);
 
         Learner learner = new Learner();
@@ -55,7 +60,7 @@ public class LearnerService {
         learner.setCohort(req.getCohort());
         learner = learnerRepository.save(learner);
 
-        return new CreateLearnerResponse(toLearnerResponse(learner), tempPassword);
+        return new CreateLearnerResponse(toLearnerResponse(learner), tempPassword, expiresAt);
     }
 
     @Transactional(readOnly = true)
@@ -73,26 +78,32 @@ public class LearnerService {
         return toLearnerResponse(learner);
     }
 
+    /**
+     * Reset a learner's password.
+     * Returns { email, temporaryPassword, expiresAt } matching the frontend Credentials type.
+     */
     @Transactional
-    public MessageResponse resetPassword(Long learnerId) {
+    public ResetPasswordResponse resetPassword(Long learnerId) {
         Learner learner = learnerRepository.findById(learnerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Learner not found"));
 
         String tempPassword = generateTempPassword();
+        long expiresAt = System.currentTimeMillis() + TEMP_PASSWORD_MS;
+
         Account account = learner.getAccount();
         account.setPasswordHash(passwordEncoder.encode(tempPassword));
         account.setMustChangePassword(true);
-        account.setTempPasswordExpiresAt(LocalDateTime.now().plusHours(24));
+        account.setTempPasswordExpiresAt(toLocalDateTime(expiresAt));
         accountRepository.save(account);
 
-        return new MessageResponse("Temporary password: " + tempPassword);
+        return new ResetPasswordResponse(account.getEmail(), tempPassword, expiresAt);
     }
 
     public LearnerResponse toLearnerResponse(Learner learner) {
         return new LearnerResponse(
                 learner.getId(),
                 learner.getAccount().getEmail(),
-                learner.getDisplayName(),
+                learner.getDisplayName(),   // serialized as "name"
                 learner.getCohort(),
                 learner.getAccount().isMustChangePassword()
         );
@@ -100,5 +111,9 @@ public class LearnerService {
 
     private String generateTempPassword() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+    }
+
+    private LocalDateTime toLocalDateTime(long epochMillis) {
+        return LocalDateTime.ofEpochSecond(epochMillis / 1000, 0, ZoneOffset.UTC);
     }
 }

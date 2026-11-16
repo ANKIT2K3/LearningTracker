@@ -3,7 +3,7 @@ package com.LearningTracker.Backend.service;
 import com.LearningTracker.Backend.dto.request.CreateLearnerRequest;
 import com.LearningTracker.Backend.dto.response.CreateLearnerResponse;
 import com.LearningTracker.Backend.dto.response.LearnerResponse;
-import com.LearningTracker.Backend.dto.response.MessageResponse;
+import com.LearningTracker.Backend.dto.response.ResetPasswordResponse;
 import com.LearningTracker.Backend.entity.Account;
 import com.LearningTracker.Backend.entity.Learner;
 import com.LearningTracker.Backend.repository.AccountRepository;
@@ -149,10 +149,13 @@ class LearnerServiceTest {
         when(learnerRepository.findById(1L)).thenReturn(Optional.of(learner));
         when(passwordEncoder.encode(anyString())).thenReturn("new_hash");
 
-        MessageResponse response = learnerService.resetPassword(1L);
+        ResetPasswordResponse response = learnerService.resetPassword(1L);
 
         assertNotNull(response);
-        assertTrue(response.getMessage().startsWith("Temporary password: "));
+        assertEquals("reset@test.com", response.getEmail());
+        assertNotNull(response.getTemporaryPassword());
+        assertEquals(12, response.getTemporaryPassword().length());
+        assertTrue(response.getExpiresAt() > System.currentTimeMillis());
         assertTrue(account.isMustChangePassword());
         assertNotNull(account.getTempPasswordExpiresAt());
         verify(accountRepository).save(account);

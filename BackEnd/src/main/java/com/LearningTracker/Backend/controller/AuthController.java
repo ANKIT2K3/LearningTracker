@@ -27,9 +27,15 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(req, request));
     }
 
+    /**
+     * Returns a fresh LoginResponse (not MessageResponse) so the frontend can update
+     * its in-memory session object (mustChangePassword = false) in one round-trip.
+     * Frontend call: await request('/auth/change-password', 'POST', {...})
+     * and then: saveSession({ ...getSession()!, mustChangePassword: false })
+     */
     @PostMapping("/change-password")
-    public ResponseEntity<MessageResponse> changePassword(@Valid @RequestBody ChangePasswordRequest req,
-                                                          Authentication authentication) {
+    public ResponseEntity<LoginResponse> changePassword(@Valid @RequestBody ChangePasswordRequest req,
+                                                        Authentication authentication) {
         return ResponseEntity.ok(authService.changePassword(req, authentication));
     }
 

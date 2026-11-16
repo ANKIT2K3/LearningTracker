@@ -6,6 +6,7 @@ import com.LearningTracker.Backend.dto.response.LoginResponse;
 import com.LearningTracker.Backend.dto.response.MessageResponse;
 import com.LearningTracker.Backend.entity.Account;
 import com.LearningTracker.Backend.repository.AccountRepository;
+import com.LearningTracker.Backend.repository.LearnerRepository;
 import com.LearningTracker.Backend.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -38,6 +39,9 @@ class AuthServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private LearnerRepository learnerRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -82,7 +86,7 @@ class AuthServiceTest {
 
         assertNotNull(response);
         assertEquals("user@test.com", response.getEmail());
-        assertEquals("COORDINATOR", response.getRole());
+        assertEquals("Coordinator", response.getRole());
         assertFalse(response.isMustChangePassword());
         verify(httpSession).setAttribute(anyString(), any());
     }
@@ -122,10 +126,11 @@ class AuthServiceTest {
         req.setCurrentPassword("oldPass");
         req.setNewPassword("newPass123");
 
-        MessageResponse response = authService.changePassword(req, authentication);
+        LoginResponse response = authService.changePassword(req, authentication);
 
         assertNotNull(response);
-        assertEquals("Password changed successfully", response.getMessage());
+        assertEquals("user@test.com", response.getEmail());
+        assertFalse(response.isMustChangePassword());
         assertFalse(account.isMustChangePassword());
         assertNull(account.getTempPasswordExpiresAt());
         assertEquals("new_hash", account.getPasswordHash());

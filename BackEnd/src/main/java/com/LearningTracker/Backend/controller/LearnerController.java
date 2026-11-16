@@ -4,7 +4,7 @@ import com.LearningTracker.Backend.dto.request.CreateLearnerRequest;
 import com.LearningTracker.Backend.dto.response.AssignmentResponse;
 import com.LearningTracker.Backend.dto.response.CreateLearnerResponse;
 import com.LearningTracker.Backend.dto.response.LearnerResponse;
-import com.LearningTracker.Backend.dto.response.MessageResponse;
+import com.LearningTracker.Backend.dto.response.ResetPasswordResponse;
 import com.LearningTracker.Backend.service.AssignmentService;
 import com.LearningTracker.Backend.service.LearnerService;
 import jakarta.validation.Valid;
@@ -43,8 +43,11 @@ public class LearnerController {
         return ResponseEntity.ok(assignmentService.getAssignmentsForLearner(id));
     }
 
+    /**
+     * Returns { email, temporaryPassword, expiresAt } — matching the frontend Credentials type.
+     */
     @PostMapping("/{id}/reset-password")
-    public ResponseEntity<MessageResponse> resetPassword(@PathVariable Long id) {
+    public ResponseEntity<ResetPasswordResponse> resetPassword(@PathVariable Long id) {
         return ResponseEntity.ok(learnerService.resetPassword(id));
     }
 }
