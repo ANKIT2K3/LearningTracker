@@ -27,6 +27,11 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getAllActivities());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ActivityResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(activityService.getActivityById(id));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('COORDINATOR')")
     public ResponseEntity<ActivityResponse> create(@Valid @RequestBody CreateActivityRequest req) {

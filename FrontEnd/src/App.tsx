@@ -94,7 +94,9 @@ export default function App() {
 
   const coordinator = user.role === 'Coordinator';
   const learners = data.learners.filter(l => cohort === 'All cohorts' || l.cohort === cohort);
-  const assignments = data.assignments.filter(a => learners.some(l => l.id === a.learnerId));
+  const assignments = coordinator
+    ? data.assignments.filter(a => learners.some(l => l.id === a.learnerId))
+    : data.assignments;
   const stats = summary(assignments);
   const cohorts = [...new Set(data.learners.map(l => l.cohort).filter(Boolean))];
   const learnerMatches = learners.filter(l => `${l.name} ${l.email} ${l.cohort}`.toLowerCase().includes(query.toLowerCase()));
@@ -149,5 +151,21 @@ export default function App() {
 function TrainingCard({ assignment, activity, Icon, onSave }: { assignment: Assignment; activity: Activity; Icon: LucideIcon; onSave: (status: Status) => Promise<void> }) {
   const [value, setValue] = useState<Status>(assignment.status); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
   useEffect(() => setValue(assignment.status), [assignment.status]);
-  return <article className="panel training-card"><div className="training-card-top"><span className={`activity-icon ${topicClass(activity.topic)}`}><Icon size={24} /></span><Badge status={assignment.status} /></div><span className="activity-topic">{activity.topic}</span><h2>{activity.title}</h2><p className="training-hours"><Clock3 size={14} />{activity.plannedHours} planned hours</p><ProgressBar value={assignment.status === 'Completed' ? 100 : assignment.status === 'In Progress' ? 50 : 0} /><form onSubmit={async e => { e.preventDefault(); setSaving(true); setError(''); try { await onSave(value); } catch(e) { setError((e as Error).message); } finally { setSaving(false); } }}><Field label="Your progress"><select aria-label={`Status for ${activity.title}`} value={value} onChange={e => setValue(e.target.value as Status)}>{STATUSES.map(s => <option key={s}>{s}</option>)}</select></Field><Button type="submit" secondary disabled={saving || value === assignment.status}>{saving ? 'Saving…' : value === assignment.status ? 'Up to date' : 'Save progress'}{value === assignment.status ? <Check size={15} /> : <ArrowDown size={15} />}</Button><ErrorMessage>{error}</ErrorMessage></form></article>;
+
+  async function handleStatusChange(nextStatus: Status) {
+    setValue(nextStatus);
+    if (nextStatus === assignment.status) return;
+    setSaving(true);
+    setError('');
+    try {
+      await onSave(nextStatus);
+    } catch(e) {
+      setError((e as Error).message);
+      setValue(assignment.status);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <article className="panel training-card"><div className="training-card-top"><span className={`activity-icon ${topicClass(activity.topic)}`}><Icon size={24} /></span><Badge status={assignment.status} /></div><span className="activity-topic">{activity.topic}</span><h2>{activity.title}</h2><p className="training-hours"><Clock3 size={14} />{activity.plannedHours} planned hours</p><ProgressBar value={assignment.status === 'Completed' ? 100 : assignment.status === 'In Progress' ? 50 : 0} /><form onSubmit={async e => { e.preventDefault(); await handleStatusChange(value); }}><Field label="Your progress"><select aria-label={`Status for ${activity.title}`} value={value} disabled={saving} onChange={e => void handleStatusChange(e.target.value as Status)}>{STATUSES.map(s => <option key={s} value={s}>{s}</option>)}</select></Field><Button type="submit" secondary disabled={saving || value === assignment.status}>{saving ? 'Saving…' : value === assignment.status ? 'Up to date' : 'Save progress'}{value === assignment.status ? <Check size={15} /> : <ArrowDown size={15} />}</Button><ErrorMessage>{error}</ErrorMessage></form></article>;
 }

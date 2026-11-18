@@ -33,6 +33,11 @@ public class LearnerController {
         return ResponseEntity.ok(learnerService.getAllLearners());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<LearnerResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(learnerService.getLearnerById(id));
+    }
+
     @PostMapping
     public ResponseEntity<CreateLearnerResponse> create(@Valid @RequestBody CreateLearnerRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(learnerService.createLearner(req));

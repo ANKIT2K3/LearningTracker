@@ -1,3 +1,4 @@
+
 package com.LearningTracker.Backend.service;
 
 import com.LearningTracker.Backend.dto.request.CreateActivityRequest;
@@ -28,6 +29,13 @@ public class ActivityService {
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ActivityResponse getActivityById(Long id) {
+        Activity activity = activityRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found"));
+        return toResponse(activity);
     }
 
     @Transactional

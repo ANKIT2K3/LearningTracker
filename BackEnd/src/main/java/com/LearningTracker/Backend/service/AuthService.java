@@ -108,8 +108,15 @@ public class AuthService {
 
         long expiresAt = System.currentTimeMillis() + SESSION_MS;
 
+        Long userId = account.getId();
+        if ("LEARNER".equalsIgnoreCase(account.getRole())) {
+            userId = learnerRepository.findByAccount_Id(account.getId())
+                    .map(com.LearningTracker.Backend.entity.Learner::getId)
+                    .orElse(account.getId());
+        }
+
         return new LoginResponse(
-                account.getId(),
+                userId,
                 name,
                 account.getEmail(),
                 frontendRole,

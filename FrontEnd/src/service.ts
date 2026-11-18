@@ -147,7 +147,8 @@ export const service = {
         const enriched = await request<ApiAssignmentResponse[]>('/me/assignments');
         const activities = [...new Map(enriched.map(a => [a.activity.id, mapActivity(a.activity)])).values()];
         const assignments = enriched.map(mapAssignment);
-        return { learners: [{ id: user.id, name: user.name, email: user.email, cohort: '' }], assignments, activities };
+        const learnerId = enriched.length > 0 ? String(enriched[0].learnerId) : user.id;
+        return { learners: [{ id: learnerId, name: user.name, email: user.email, cohort: '' }], assignments, activities };
       }
       const apiLearners = await request<ApiLearnerResponse[]>('/learners');
       const apiActivities = await request<Activity[]>('/activities');  // ActivityResponse: {id, title, topic, plannedHours}
